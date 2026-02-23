@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security & Architecture — AntimKros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #080808;
+      --surface: #111111;
+      --surface2: #0e0e0e;
+      --border: rgba(240,234,214,0.1);
+      --bone: #F0EAD6;
+      --bone-dim: rgba(240,234,214,0.55);
+      --bone-faint: rgba(240,234,214,0.05);
+      --gold: #C9A96E;
+      --gold-dim: rgba(201,169,110,0.3);
+      --gold-faint: rgba(201,169,110,0.07);
+      --green: #4CAF82;
+      --green-dim: rgba(76,175,130,0.15);
+      --green-faint: rgba(76,175,130,0.06);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--bone);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+    .cursor {
+      position: fixed; width: 10px; height: 10px;
+      background: var(--gold); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: width .3s, height .3s;
+    }
+    .cursor-ring {
+      position: fixed; width: 36px; height: 36px;
+      border: 1px solid rgba(201,169,110,.5); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: all .15s ease;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 1000; opacity: .6;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+      padding: 22px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(8,8,8,.92); border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 300; letter-spacing: .12em;
+      color: var(--bone); text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-logo span {
+      display: inline-block; width: 28px; height: 28px;
+      border: 1px solid var(--gold); border-radius: 50%; position: relative;
+    }
+    .nav-logo span::after {
+      content: ''; position: absolute; inset: 4px;
+      background: var(--gold); border-radius: 50%;
+      animation: pulse-dot 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.4;transform:scale(.6);} }
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--bone-dim); text-decoration: none; transition: color .3s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+    .nav-cta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      padding: 10px 24px; border: 1px solid var(--gold);
+      color: var(--gold); text-decoration: none; transition: all .3s;
+    }
+    .nav-cta:hover { background: var(--gold); color: var(--black); }
+
+    /* HERO */
+    .page-hero {
+      padding: 140px 80px 0;
+      position: relative; overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center;
+    }
+    /* Scanning line animation */
+    .scan-overlay {
+      position: absolute; inset: 0; pointer-events: none;
+      overflow: hidden; z-index: 1;
+    }
+    .scan-line {
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(76,175,130,0.4), transparent);
+      animation: scan 6s linear infinite;
+      top: 0;
+    }
+    @keyframes scan {
+      0%   { top: 0; opacity: 0; }
+      5%   { opacity: 1; }
+      95%  { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+    .hero-grid-bg {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(76,175,130,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(76,175,130,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    .hero-left { position: relative; z-index: 2; padding-bottom: 80px; }
+    .page-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .25em; color: var(--green);
+      text-transform: uppercase; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .page-eyebrow::before { content:''; display:block; width:40px; height:1px; background:var(--green); }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px,5.5vw,82px);
+      font-weight: 300; line-height: 1.05; margin-bottom: 28px;
+    }
+    .page-title em { font-style: italic; color: var(--gold); }
+    .page-desc { font-size: 15px; line-height: 1.85; color: var(--bone-dim); max-width: 480px; margin-bottom: 40px; }
+    .security-badges {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px;
+    }
+    .badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px;
+      border: 1px solid var(--green-dim);
+      background: var(--green-faint);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .18em; color: var(--green);
+      text-transform: uppercase;
+    }
+    .badge-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse-dot 2s infinite; }
+
+    /* Vault visual */
+    .hero-right { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; padding-bottom: 80px; }
+    .vault {
+      position: relative; width: 400px; height: 400px;
+    }
+    /* Concentric rings */
+    .vault-ring {
+      position: absolute; top: 50%; left: 50%;
+      border-radius: 50%; transform: translate(-50%,-50%);
+      border-style: solid;
+    }
+    .vr1 { width:120px;height:120px;border-width:2px;border-color:rgba(76,175,130,.8);animation:spin-v 8s linear infinite; }
+    .vr2 { width:200px;height:200px;border-width:1px;border-color:rgba(76,175,130,.4);border-style:dashed;animation:spin-v 14s linear infinite reverse; }
+    .vr3 { width:290px;height:290px;border-width:1px;border-color:rgba(76,175,130,.2);animation:spin-v 22s linear infinite; }
+    .vr4 { width:380px;height:380px;border-width:1px;border-color:rgba(76,175,130,.1);border-style:dashed;animation:spin-v 32s linear infinite reverse; }
+    @keyframes spin-v { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+
+    .vault-core {
+      position: absolute; top:50%;left:50%; transform:translate(-50%,-50%);
+      width: 80px; height: 80px;
+      background: radial-gradient(circle, rgba(76,175,130,.3), rgba(76,175,130,.05));
+      border-radius: 50%;
+      border: 2px solid var(--green);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 0 40px rgba(76,175,130,.3), inset 0 0 20px rgba(76,175,130,.1);
+    }
+    /* Lock nodes on rings */
+    .vault-node {
+      position: absolute; width: 10px; height: 10px;
+      background: var(--green); border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+      top:50%; left:50%;
+    }
+    .vr1 .vault-node { transform: translate(-50%, -60px); }
+    .vr3 .vault-node:nth-child(1) { transform: translate(-50%, -145px); }
+    .vr3 .vault-node:nth-child(2) { transform: translate(145px, -50%); width:6px;height:6px; }
+    .vr3 .vault-node:nth-child(3) { transform: translate(-50%, 145px); width:6px;height:6px; }
+
+    .vault-label {
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .15em; color: rgba(76,175,130,.7);
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .vl-1 { top:6%; right:14%; }
+    .vl-2 { bottom:18%; left:4%; }
+    .vl-3 { top:52%; right:2%; }
+    .vl-4 { top:18%; left:8%; }
+
+    /* STATUS BAR */
+    .status-bar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 80px;
+      display: flex; gap: 0; overflow-x: auto;
+    }
+    .status-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 18px 32px; border-right: 1px solid var(--border);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .status-indicator {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-indicator.on { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse-dot 2s infinite; }
+    .status-indicator.gold { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+    .status-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: var(--bone-dim);
+      text-transform: uppercase;
+    }
+    .status-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .1em; color: var(--green);
+    }
+
+    /* SHARED */
+    .section { padding: 100px 80px; border-bottom: 1px solid var(--border); }
+    .section-bg { background: var(--surface); }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .3em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(34px,3.8vw,52px);
+      font-weight: 300; line-height: 1.1; margin-bottom: 16px;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-intro {
+      font-size: 15px; line-height: 1.8; color: var(--bone-dim);
+      max-width: 640px; margin-bottom: 64px;
+    }
+
+    /* DEPLOYMENT MODES */
+    .deploy-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+    }
+    .deploy-card {
+      padding: 48px 36px; background: var(--black);
+      border: 1px solid var(--border); position: relative; overflow: hidden;
+      transition: border-color .4s;
+    }
+    .deploy-card.featured { border-color: var(--gold-dim); background: var(--gold-faint); }
+    .deploy-card:hover { border-color: rgba(201,169,110,.25); }
+    .deploy-card::after {
+      content: ''; position: absolute; bottom:0;left:0;right:0;height:2px;
+      background: linear-gradient(90deg, var(--green), transparent);
+      transform: scaleX(0); transform-origin: left; transition: transform .4s;
+    }
+    .deploy-card:hover::after { transform: scaleX(1); }
+    .deploy-badge {
+      position: absolute; top:20px;right:20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; letter-spacing: .2em; padding: 4px 10px;
+      background: var(--gold); color: var(--black); text-transform: uppercase;
+    }
+    .deploy-icon { font-size: 36px; margin-bottom: 24px; display: block; }
+    .deploy-name {
+      font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: .02em;
+    }
+    .deploy-desc { font-size: 13px; line-height: 1.75; color: var(--bone-dim); margin-bottom: 28px; }
+    .deploy-specs { display: flex; flex-direction: column; gap: 10px; }
+    .deploy-spec {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px; color: var(--bone-dim);
+    }
+    .spec-icon { color: var(--green); font-size: 14px; flex-shrink: 0; }
+
+    /* ENCRYPTION SECTION */
+    .encryption-layout {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start;
+    }
+    .enc-diagram {
+      background: var(--black); border: 1px solid var(--border);
+      padding: 40px; position: relative;
+    }
+    .enc-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .25em; color: var(--green);
+      text-transform: uppercase; margin-bottom: 28px;
+    }
+    .enc-layer {
+      padding: 16px 20px; margin-bottom: 2px;
+      border: 1px solid var(--border); position: relative;
+      display: flex; align-items: center; gap: 16px;
+      transition: border-color .3s, background .3s;
+    }
+    .enc-layer:hover { border-color: var(--gold-dim); background: var(--gold-faint); }
+    .enc-layer-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .15em; color: var(--green);
+      flex-shrink: 0; width: 28px;
+    }
+    .enc-layer-name { font-size: 13px; font-weight: 600; flex: 1; }
+    .enc-layer-detail {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .1em; color: var(--bone-dim);
+      text-align: right;
+    }
+    .enc-connector {
+      display: flex; align-items: center; justify-content: center;
+      height: 12px; color: var(--green); font-size: 12px; margin: 0 20px;
+    }
+
+    .enc-cards { display: flex; flex-direction: column; gap: 16px; }
+    .enc-card {
+      padding: 28px 32px; border: 1px solid var(--border);
+      background: var(--surface); transition: border-color .3s;
+    }
+    .enc-card:hover { border-color: var(--gold-dim); }
+    .enc-card-header {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+    }
+    .enc-card-icon { font-size: 20px; }
+    .enc-card-title { font-size: 15px; font-weight: 700; }
+    .enc-card-body { font-size: 13px; line-height: 1.7; color: var(--bone-dim); }
+    .enc-tag {
+      display: inline-block; margin-top: 10px; padding: 4px 10px;
+      border: 1px solid var(--green-dim); background: var(--green-faint);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .15em; color: var(--green); text-transform: uppercase;
+    }
+
+    /* AIRGAP SECTION */
+    .airgap-section { background: var(--black); }
+    .airgap-layout {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start;
+    }
+
+    /* Network diagram */
+    .network-diagram {
+      background: var(--surface); border: 1px solid var(--border); padding: 36px;
+    }
+    .net-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .25em; color: var(--green);
+      text-transform: uppercase; margin-bottom: 28px;
+    }
+    .net-zones { display: flex; flex-direction: column; gap: 2px; }
+    .net-zone {
+      padding: 20px 24px; border: 1px solid var(--border);
+      position: relative;
+    }
+    .net-zone.secure {
+      border-color: var(--green-dim); background: var(--green-faint);
+    }
+    .net-zone.danger {
+      border-color: rgba(235,87,87,.2); background: rgba(235,87,87,.04);
+    }
+    .net-zone.bridge { background: var(--bone-faint); }
+    .zone-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .2em; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .zone-label.green { color: var(--green); }
+    .zone-label.red { color: #eb5757; }
+    .zone-label.dim { color: var(--bone-dim); }
+    .zone-items { display: flex; gap: 8px; flex-wrap: wrap; }
+    .zone-item {
+      padding: 6px 12px; background: var(--black); border: 1px solid var(--border);
+      font-size: 11px; font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .net-barrier {
+      display: flex; align-items: center; gap: 16px; padding: 12px 24px;
+      background: var(--black); border: 2px solid var(--gold-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .2em; color: var(--gold);
+      text-transform: uppercase;
+    }
+    .barrier-icon { font-size: 16px; animation: pulse-dot 2s infinite; }
+
+    .airgap-features { display: flex; flex-direction: column; gap: 16px; }
+    .airgap-feat {
+      padding: 28px 32px; border: 1px solid var(--border);
+      background: var(--surface); transition: all .3s;
+    }
+    .airgap-feat:hover { border-color: var(--gold-dim); transform: translateX(4px); }
+    .feat-header { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+    .feat-icon { font-size: 20px; }
+    .feat-title { font-size: 15px; font-weight: 700; }
+    .feat-body { font-size: 13px; line-height: 1.7; color: var(--bone-dim); }
+    .feat-mono {
+      margin-top: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .1em; color: var(--green);
+      background: var(--green-faint); padding: 8px 12px;
+      border-left: 2px solid var(--green);
+    }
+
+    /* COMPLIANCE SECTION */
+    .compliance-section { background: var(--surface); }
+    .compliance-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-bottom: 60px;
+    }
+    .comp-card {
+      padding: 40px 32px; background: var(--black);
+      border: 1px solid var(--border); transition: border-color .3s; position: relative;
+    }
+    .comp-card:hover { border-color: var(--gold-dim); }
+    .comp-logo {
+      width: 56px; height: 56px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 20px; transition: border-color .3s;
+    }
+    .comp-card:hover .comp-logo { border-color: var(--gold); }
+    .comp-name {
+      font-size: 20px; font-weight: 800; letter-spacing: .04em; margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace; color: var(--bone);
+    }
+    .comp-full { font-size: 12px; color: var(--bone-dim); margin-bottom: 16px; }
+    .comp-body { font-size: 13px; line-height: 1.7; color: var(--bone-dim); margin-bottom: 20px; }
+    .comp-items { display: flex; flex-direction: column; gap: 8px; }
+    .comp-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--bone-dim);
+    }
+    .comp-check { color: var(--green); font-size: 13px; flex-shrink: 0; }
+
+    .compliance-note {
+      padding: 36px 48px; border: 1px solid var(--gold-dim);
+      background: var(--gold-faint);
+      display: flex; align-items: center; gap: 32px;
+    }
+    .note-icon { font-size: 32px; flex-shrink: 0; }
+    .note-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .note-body { font-size: 13px; line-height: 1.7; color: var(--bone-dim); }
+
+    /* THREAT MODEL */
+    .threat-section { background: var(--black); }
+    .threat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
+    }
+    .threat-table { width: 100%; border-collapse: collapse; }
+    .threat-table th {
+      padding: 14px 20px; text-align: left;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .2em; text-transform: uppercase;
+      color: var(--bone-dim); border-bottom: 1px solid var(--border);
+    }
+    .threat-table td {
+      padding: 16px 20px; font-size: 12px; border-bottom: 1px solid var(--border);
+    }
+    .threat-table tr:hover td { background: var(--bone-faint); }
+    .threat-name { font-weight: 600; }
+    .threat-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ts-on { color: var(--green); }
+    .ts-arch { color: var(--gold); }
+
+    .security-principles { display: flex; flex-direction: column; gap: 16px; }
+    .principle-card {
+      padding: 24px 28px; border: 1px solid var(--border);
+      background: var(--surface); display: flex; gap: 20px; align-items: flex-start;
+      transition: border-color .3s;
+    }
+    .principle-card:hover { border-color: var(--gold-dim); }
+    .principle-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px; font-weight: 300; color: rgba(201,169,110,.2);
+      line-height: 1; flex-shrink: 0; min-width: 36px;
+    }
+    .principle-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+    .principle-body { font-size: 12px; line-height: 1.65; color: var(--bone-dim); }
+
+    /* CTA STRIP */
+    .cta-strip {
+      padding: 100px 80px; border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr auto; gap: 60px; align-items: center;
+    }
+    .cta-strip-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px,3.5vw,48px); font-weight: 300; line-height: 1.15;
+    }
+    .cta-strip-title em { font-style: italic; color: var(--gold); }
+    .cta-strip-body { font-size: 14px; line-height: 1.75; color: var(--bone-dim); margin-top: 12px; }
+    .cta-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+    .btn-primary {
+      padding: 16px 36px; background: var(--gold); color: var(--black);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+      text-decoration: none; display: inline-block; transition: all .3s;
+    }
+    .btn-primary:hover { background: var(--bone); transform: translateY(-2px); }
+    .btn-ghost {
+      padding: 16px 36px; border: 1px solid var(--border);
+      color: var(--bone-dim); font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+      text-decoration: none; display: inline-block; transition: all .3s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* FOOTER */
+    footer {
+      padding: 60px 80px 40px; border-top: 1px solid var(--border); background: var(--surface);
+    }
+    .footer-top {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px;
+    }
+    .footer-brand p {
+      font-size: 13px; line-height: 1.75; color: var(--bone-dim); margin-top: 16px; max-width: 280px;
+    }
+    .footer-col-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .3em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .footer-links a { font-size: 13px; color: var(--bone-dim); text-decoration: none; transition: color .3s; }
+    .footer-links a:hover { color: var(--bone); }
+    .footer-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 32px; border-top: 1px solid var(--border);
+    }
+    .footer-bottom p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: rgba(240,234,214,.3);
+    }
+    .footer-docs {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: var(--gold);
+      text-decoration: none; text-transform: uppercase;
+    }
+    .footer-docs:hover { color: var(--bone); }
+
+    /* Reveal */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo"><span></span>AntimKros</a>
+    <ul class="nav-links">
+      <li><a href="solutions.html">Solutions</a></li>
+      <li><a href="research.html">Research Lab</a></li>
+      <li><a href="security.html" class="active">Security</a></li>
+      <li><a href="case-studies.html">Case Studies</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Request Audit</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="page-hero">
+    <div class="hero-grid-bg"></div>
+    <div class="scan-overlay"><div class="scan-line"></div></div>
+
+    <div class="hero-left">
+      <p class="page-eyebrow">Security & Architecture</p>
+      <h1 class="page-title">Your Data Never<br/>Leaves Your<br/><em>Perimeter.</em></h1>
+      <p class="page-desc">We remove the "Is my data safe?" question from your sales cycle entirely. Every system we build defaults to maximum isolation — on-premise, encrypted at every layer, and auditable at every step.</p>
+      <div class="security-badges">
+        <span class="badge"><span class="badge-dot"></span>HIPAA Compliant</span>
+        <span class="badge"><span class="badge-dot"></span>GDPR Ready</span>
+        <span class="badge"><span class="badge-dot"></span>SOC 2 Type II</span>
+        <span class="badge"><span class="badge-dot"></span>ISO 27001</span>
+        <span class="badge"><span class="badge-dot"></span>Air-Gap Capable</span>
+      </div>
+      <a href="contact.html" class="btn-primary">Request Security Briefing</a>
+    </div>
+
+    <div class="hero-right">
+      <div class="vault">
+        <div class="vault-ring vr4"></div>
+        <div class="vault-ring vr3">
+          <div class="vault-node"></div>
+          <div class="vault-node"></div>
+          <div class="vault-node"></div>
+        </div>
+        <div class="vault-ring vr2"></div>
+        <div class="vault-ring vr1">
+          <div class="vault-node"></div>
+        </div>
+        <div class="vault-core">🔒</div>
+        <span class="vault-label vl-1">Encrypted Transit</span>
+        <span class="vault-label vl-2">On-Premise Inference</span>
+        <span class="vault-label vl-3">Zero Data Egress</span>
+        <span class="vault-label vl-4">Air-Gap Ready</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="status-indicator on"></div>
+      <span class="status-text">System Status</span>
+      <span class="status-val">All Systems Operational</span>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator gold"></div>
+      <span class="status-text">Uptime</span>
+      <span class="status-val">99.97%</span>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator on"></div>
+      <span class="status-text">Data Egress</span>
+      <span class="status-val">0.00 bytes</span>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator on"></div>
+      <span class="status-text">Threat Events</span>
+      <span class="status-val">0 Active</span>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator gold"></div>
+      <span class="status-text">Last Pen Test</span>
+      <span class="status-val">Aug 2025 — Passed</span>
+    </div>
+    <div class="status-item">
+      <div class="status-indicator on"></div>
+      <span class="status-text">Encryption</span>
+      <span class="status-val">AES-256 Active</span>
+    </div>
+  </div>
+
+  <!-- DEPLOYMENT MODES -->
+  <section class="section" id="deployment">
+    <p class="section-label reveal">Deployment Architecture</p>
+    <h2 class="section-title reveal">Three Modes of<br/><em>Sovereign Deployment</em></h2>
+    <p class="section-intro reveal">Every engagement starts with a security posture conversation. We match your infrastructure reality with the deployment model that best protects your data — without sacrificing performance.</p>
+
+    <div class="deploy-grid">
+      <div class="deploy-card reveal">
+        <span class="deploy-icon">🏢</span>
+        <h3 class="deploy-name">Full On-Premise</h3>
+        <p class="deploy-desc">Model weights, inference engine, API layer, and monitoring stack all run within your data center. Zero cloud dependency. Your hardware, your rules, your auditors.</p>
+        <div class="deploy-specs">
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Runs on your bare-metal or VMware</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>No internet required post-deployment</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Full model weight ownership</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Auditor-accessible logging</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Updates via cryptographically signed packages</div>
+        </div>
+      </div>
+      <div class="deploy-card featured reveal">
+        <span class="deploy-badge">Most Popular</span>
+        <span class="deploy-icon">☁️</span>
+        <h3 class="deploy-name">Private Cloud VPC</h3>
+        <p class="deploy-desc">Deployed inside your dedicated AWS, Azure, or GCP VPC. Network-isolated from public internet. Combines cloud elasticity with private-network security guarantees.</p>
+        <div class="deploy-specs">
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Isolated VPC — no shared tenancy</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Private endpoints only (no public IPs)</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>VPN + TLS 1.3 to your offices</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Auto-scaling within security perimeter</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>CloudTrail / Azure Monitor integration</div>
+        </div>
+      </div>
+      <div class="deploy-card reveal">
+        <span class="deploy-icon">🔌</span>
+        <h3 class="deploy-name">Air-Gapped Deployment</h3>
+        <p class="deploy-desc">For defence, intelligence, and highly regulated verticals. The inference system has zero network connectivity. Updates delivered via offline signed packages on hardened media.</p>
+        <div class="deploy-specs">
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Physically isolated — no NIC required</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Signed offline update protocol</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Hardware security module integration</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Classified environment compatible</div>
+          <div class="deploy-spec"><span class="spec-icon">✓</span>Model weight encryption at rest</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENCRYPTION LAYERS -->
+  <section class="section section-bg" id="encryption">
+    <p class="section-label reveal">Data Protection</p>
+    <h2 class="section-title reveal">Encryption at<br/><em>Every Layer</em></h2>
+    <p class="section-intro reveal">We don't encrypt at the perimeter and trust everything inside. We apply independent encryption at every layer of the stack — from raw storage to model weights to the API response.</p>
+
+    <div class="encryption-layout">
+      <div class="enc-diagram reveal">
+        <p class="enc-title">// Encryption Stack — Layer by Layer</p>
+
+        <div class="enc-layer">
+          <span class="enc-layer-num">L7</span>
+          <span class="enc-layer-name">API Response</span>
+          <span class="enc-layer-detail">TLS 1.3 · HSTS</span>
+        </div>
+        <div class="enc-connector">↕</div>
+        <div class="enc-layer">
+          <span class="enc-layer-num">L6</span>
+          <span class="enc-layer-name">Application Layer</span>
+          <span class="enc-layer-detail">JWT · mTLS</span>
+        </div>
+        <div class="enc-connector">↕</div>
+        <div class="enc-layer">
+          <span class="enc-layer-num">L5</span>
+          <span class="enc-layer-name">Inference Engine</span>
+          <span class="enc-layer-detail">Enclave · SGX</span>
+        </div>
+        <div class="enc-connector">↕</div>
+        <div class="enc-layer">
+          <span class="enc-layer-num">L4</span>
+          <span class="enc-layer-name">Model Weights</span>
+          <span class="enc-layer-detail">AES-256-GCM</span>
+        </div>
+        <div class="enc-connector">↕</div>
+        <div class="enc-layer">
+          <span class="enc-layer-num">L3</span>
+          <span class="enc-layer-name">Training Data Store</span>
+          <span class="enc-layer-detail">AES-256 · KMIP</span>
+        </div>
+        <div class="enc-connector">↕</div>
+        <div class="enc-layer">
+          <span class="enc-layer-num">L2</span>
+          <span class="enc-layer-name">Block Storage</span>
+          <span class="enc-layer-detail">LUKS · BitLocker</span>
+        </div>
+        <div class="enc-connector">↕</div>
+        <div class="enc-layer">
+          <span class="enc-layer-num">L1</span>
+          <span class="enc-layer-name">HSM / Key Vault</span>
+          <span class="enc-layer-detail">FIPS 140-2 Level 3</span>
+        </div>
+
+        <div style="margin-top:24px;padding:12px 16px;background:var(--green-faint);border:1px solid var(--green-dim);">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--green);text-transform:uppercase;">
+            ✓ Keys never co-located with data · Customer-managed KMS available
+          </span>
+        </div>
+      </div>
+
+      <div class="enc-cards">
+        <div class="enc-card reveal">
+          <div class="enc-card-header">
+            <span class="enc-card-icon">🔑</span>
+            <h3 class="enc-card-title">Customer-Managed Keys</h3>
+          </div>
+          <p class="enc-card-body">You hold the root key. We never have access to your encryption keys — architecture enforced, not policy enforced. If you revoke the key, the model is unreadable, instantly.</p>
+          <span class="enc-tag">Bring Your Own Key (BYOK)</span>
+        </div>
+        <div class="enc-card reveal">
+          <div class="enc-card-header">
+            <span class="enc-card-icon">🧱</span>
+            <h3 class="enc-card-title">Trusted Execution Environments</h3>
+          </div>
+          <p class="enc-card-body">Inference runs inside Intel SGX enclaves where supported — meaning even a compromised host OS cannot read the model weights or the inference data passing through the system.</p>
+          <span class="enc-tag">Intel SGX · AMD SEV</span>
+        </div>
+        <div class="enc-card reveal">
+          <div class="enc-card-header">
+            <span class="enc-card-icon">🌐</span>
+            <h3 class="enc-card-title">Zero-Trust Network Architecture</h3>
+          </div>
+          <p class="enc-card-body">Every service-to-service call is authenticated via mutual TLS with short-lived certificates. No implicit trust within the perimeter. Every request is verified, logged, and rate-limited independently.</p>
+          <span class="enc-tag">mTLS · SPIFFE / SPIRE</span>
+        </div>
+        <div class="enc-card reveal">
+          <div class="enc-card-header">
+            <span class="enc-card-icon">📝</span>
+            <h3 class="enc-card-title">Immutable Audit Logs</h3>
+          </div>
+          <p class="enc-card-body">Every inference request, model access event, key rotation, and admin action is logged to a write-once, cryptographically chained audit trail. Tamper-evident and regulator-ready out of the box.</p>
+          <span class="enc-tag">WORM Logs · SHA-256 Chain</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AIR-GAP SECTION -->
+  <section class="section airgap-section" id="airgap">
+    <p class="section-label reveal">Maximum Isolation</p>
+    <h2 class="section-title reveal">Air-Gap Deployment<br/><em>Architecture</em></h2>
+    <p class="section-intro reveal">For environments where any network connectivity is unacceptable — classified government systems, critical infrastructure, and tier-1 financial networks — we operate with complete physical isolation.</p>
+
+    <div class="airgap-layout">
+      <div class="network-diagram reveal">
+        <p class="net-title">// Network Topology — Air-Gapped Mode</p>
+        <div class="net-zones">
+          <div class="net-zone danger">
+            <p class="zone-label red">⚠ External / Internet Zone</p>
+            <div class="zone-items">
+              <span class="zone-item">🌐 Public Internet</span>
+              <span class="zone-item">☁️ Cloud APIs</span>
+              <span class="zone-item">📡 External Services</span>
+            </div>
+          </div>
+          <div class="net-barrier">
+            <span class="barrier-icon">🔒</span>
+            <span>PHYSICAL AIR GAP — NO NETWORK CROSSING</span>
+          </div>
+          <div class="net-zone bridge">
+            <p class="zone-label dim">📦 Update Transfer Protocol (Offline)</p>
+            <div class="zone-items">
+              <span class="zone-item">💾 Signed Package</span>
+              <span class="zone-item">🔐 HSM Verify</span>
+              <span class="zone-item">✅ Hash Check</span>
+            </div>
+          </div>
+          <div class="net-barrier" style="border-color:var(--gold-dim);color:var(--gold);">
+            <span class="barrier-icon" style="color:var(--gold);">🛡️</span>
+            <span>SECURE ENCLAVE BOUNDARY</span>
+          </div>
+          <div class="net-zone secure">
+            <p class="zone-label green">✓ Secure AI Zone — Fully Isolated</p>
+            <div class="zone-items">
+              <span class="zone-item">🧠 SLM Inference</span>
+              <span class="zone-item">🗄️ Data Store</span>
+              <span class="zone-item">🔑 HSM</span>
+              <span class="zone-item">📊 Monitoring</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="airgap-features">
+        <div class="airgap-feat reveal">
+          <div class="feat-header">
+            <span class="feat-icon">📦</span>
+            <h3 class="feat-title">Offline Update Protocol</h3>
+          </div>
+          <p class="feat-body">Model upgrades are delivered as cryptographically signed package bundles on hardened removable media. The receiving system verifies vendor signature, package integrity hash, and version sequence before applying — and rejects anything that fails.</p>
+          <div class="feat-mono">VERIFY: sha256sum + vendor.sig → APPLY → LOG → SEAL</div>
+        </div>
+        <div class="airgap-feat reveal">
+          <div class="feat-header">
+            <span class="feat-icon">🔐</span>
+            <h3 class="feat-title">Hardware Security Module Integration</h3>
+          </div>
+          <p class="feat-body">All cryptographic operations — key generation, signing, encryption/decryption — run inside a FIPS 140-2 Level 3 certified HSM. Keys are non-exportable; the HSM physically destroys them on tamper detection.</p>
+          <div class="feat-mono">HSM: FIPS 140-2 L3 · Tamper-Evident · Non-Exportable Keys</div>
+        </div>
+        <div class="airgap-feat reveal">
+          <div class="feat-header">
+            <span class="feat-icon">👁️</span>
+            <h3 class="feat-title">Internal-Only Observability</h3>
+          </div>
+          <p class="feat-body">Monitoring, alerting, and dashboards run entirely within the air-gapped perimeter. Logs never leave. Metrics are consumed by an internal Grafana instance with no external data plane.</p>
+          <div class="feat-mono">Prometheus + Grafana · Internal Only · Zero Telemetry Out</div>
+        </div>
+        <div class="airgap-feat reveal">
+          <div class="feat-header">
+            <span class="feat-icon">📋</span>
+            <h3 class="feat-title">Classified Environment Compatibility</h3>
+          </div>
+          <p class="feat-body">Our air-gap deployment runbook has been tested against IL4, IL5, and TEMPEST-adjacent requirements. We provide architecture documentation suitable for submission to security review boards.</p>
+          <div class="feat-mono">IL4 / IL5 Compatible · TEMPEST-Adjacent · SecRef Available</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPLIANCE -->
+  <section class="section compliance-section" id="compliance">
+    <p class="section-label reveal">Regulatory Compliance</p>
+    <h2 class="section-title reveal">Built for Regulated<br/><em>Industries</em></h2>
+    <p class="section-intro reveal">Compliance is not a checkbox we tick at the end. It is an architectural constraint baked into every design decision from day one. Here's what we cover — and how.</p>
+
+    <div class="compliance-grid">
+      <div class="comp-card reveal">
+        <div class="comp-logo">🏥</div>
+        <h3 class="comp-name">HIPAA</h3>
+        <p class="comp-full">Health Insurance Portability and Accountability Act</p>
+        <p class="comp-body">All PHI processed by our healthcare SLMs stays within your HIPAA-compliant boundary. Business Associate Agreements (BAAs) included with every healthcare engagement.</p>
+        <div class="comp-items">
+          <div class="comp-item"><span class="comp-check">✓</span>PHI never leaves your perimeter</div>
+          <div class="comp-item"><span class="comp-check">✓</span>BAA included as standard</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Audit log meets § 164.312(b)</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Minimum necessary data principle</div>
+        </div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-logo">🇪🇺</div>
+        <h3 class="comp-name">GDPR</h3>
+        <p class="comp-full">General Data Protection Regulation (EU/UK)</p>
+        <p class="comp-body">Data residency, right to erasure, and processing lawfulness are all architecture-level guarantees. We support SCCs and can deploy within specific EU jurisdictions on request.</p>
+        <div class="comp-items">
+          <div class="comp-item"><span class="comp-check">✓</span>Data residency enforcement</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Right to erasure (model unlearning)</div>
+          <div class="comp-item"><span class="comp-check">✓</span>DPA & SCCs provided</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Lawful basis documentation</div>
+        </div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-logo">🔐</div>
+        <h3 class="comp-name">SOC 2</h3>
+        <p class="comp-full">System and Organization Controls — Type II</p>
+        <p class="comp-body">Our own platform infrastructure holds SOC 2 Type II certification across all five Trust Service Criteria. Client-facing deployments include continuous monitoring controls that satisfy SOC 2 requirements.</p>
+        <div class="comp-items">
+          <div class="comp-item"><span class="comp-check">✓</span>All 5 TSC covered</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Annual third-party audit</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Report available under NDA</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Continuous control monitoring</div>
+        </div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-logo">🌍</div>
+        <h3 class="comp-name">ISO 27001</h3>
+        <p class="comp-full">International Information Security Standard</p>
+        <p class="comp-body">Our ISMS is certified to ISO/IEC 27001:2022. We extend our ISMS controls to client deployments, providing a documented security management framework that satisfies enterprise procurement requirements globally.</p>
+        <div class="comp-items">
+          <div class="comp-item"><span class="comp-check">✓</span>ISO 27001:2022 certified</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Risk register maintained</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Annual surveillance audit</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Applicable to all engagements</div>
+        </div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-logo">💳</div>
+        <h3 class="comp-name">PCI DSS</h3>
+        <p class="comp-full">Payment Card Industry Data Security Standard</p>
+        <p class="comp-body">Fintech deployments that touch cardholder data are scoped and segmented per PCI DSS v4.0. We architect the model inference layer to operate outside cardholder data environments where possible.</p>
+        <div class="comp-items">
+          <div class="comp-item"><span class="comp-check">✓</span>CDE scoping & segmentation</div>
+          <div class="comp-item"><span class="comp-check">✓</span>Tokenization-first design</div>
+          <div class="comp-item"><span class="comp-check">✓</span>QSA-friendly documentation</div>
+          <div class="comp-item"><span class="comp-check">✓</span>PCI DSS v4.0 aligned</div>
+        </div>
+      </div>
+      <div class="comp-card reveal">
+        <div class="comp-logo">🏛️</div>
+        <h3 class="comp-name">FedRAMP</h3>
+        <p class="comp-full">Federal Risk and Authorization Management Program</p>
+        <p class="comp-body">For US federal agency deployments, we architect against FedRAMP Moderate and High baselines. Air-gapped deployments are compatible with IL4/IL5 requirements for classified workloads.</p>
+        <div class="comp-items">
+          <div class="comp-item"><span class="comp-check">✓</span>FedRAMP Moderate aligned</div>
+          <div class="comp-item"><span class="comp-check">✓</span>IL4 / IL5 architecture support</div>
+          <div class="comp-item"><span class="comp-check">✓</span>NIST 800-53 control mapping</div>
+          <div class="comp-item"><span class="comp-check">✓</span>ATO documentation available</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="compliance-note reveal">
+      <span class="note-icon">📋</span>
+      <div>
+        <h3 class="note-title">Compliance Documentation Package</h3>
+        <p class="note-body">Every enterprise engagement includes a Compliance Documentation Package: SOC 2 report (under NDA), ISO 27001 certificate, data processing agreement templates, BAA (for healthcare), architecture diagrams cleared for security review boards, and a completed vendor security questionnaire (VSQ) covering the most common enterprise procurement requirements.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- THREAT MODEL -->
+  <section class="section threat-section" id="threats">
+    <p class="section-label reveal">Threat Modelling</p>
+    <h2 class="section-title reveal">What We Protect<br/><em>Against</em></h2>
+    <p class="section-intro reveal">We run formal threat modelling (STRIDE) against every deployment. Here is the threat landscape we architect against — and how each one is mitigated at the system level.</p>
+
+    <div class="threat-grid">
+      <div class="reveal">
+        <table class="threat-table">
+          <thead>
+            <tr>
+              <th>Threat Vector</th>
+              <th>Mitigation</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="threat-name">Model Weight Exfiltration</td>
+              <td style="font-size:12px;color:var(--bone-dim)">AES-256 at rest + SGX enclave</td>
+              <td><span class="threat-status ts-on">● Mitigated</span></td>
+            </tr>
+            <tr>
+              <td class="threat-name">Training Data Leakage</td>
+              <td style="font-size:12px;color:var(--bone-dim)">DP training + data residency</td>
+              <td><span class="threat-status ts-on">● Mitigated</span></td>
+            </tr>
+            <tr>
+              <td class="threat-name">Prompt Injection Attack</td>
+              <td style="font-size:12px;color:var(--bone-dim)">Input sanitisation + output guard</td>
+              <td><span class="threat-status ts-on">● Mitigated</span></td>
+            </tr>
+            <tr>
+              <td class="threat-name">Model Inversion Attack</td>
+              <td style="font-size:12px;color:var(--bone-dim)">Differential privacy + rate limits</td>
+              <td><span class="threat-status ts-on">● Mitigated</span></td>
+            </tr>
+            <tr>
+              <td class="threat-name">Supply Chain Compromise</td>
+              <td style="font-size:12px;color:var(--bone-dim)">Signed packages + SBOM</td>
+              <td><span class="threat-status ts-on">● Mitigated</span></td>
+            </tr>
+            <tr>
+              <td class="threat-name">Insider Threat</td>
+              <td style="font-size:12px;color:var(--bone-dim)">Zero-trust + immutable audit log</td>
+              <td><span class="threat-status ts-on">● Mitigated</span></td>
+            </tr>
+            <tr>
+              <td class="threat-name">API Credential Theft</td>
+              <td style="font-size:12px;color:var(--bone-dim)">Short-lived tokens + mTLS</td>
+              <td><span class="threat-status ts-on">● Mitigated</span></td>
+            </tr>
+            <tr>
+              <td class="threat-name">Adversarial Input</td>
+              <td style="font-size:12px;color:var(--bone-dim)">Adversarial training + detection</td>
+              <td><span class="threat-status ts-arch">◐ Architecturally Contained</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="security-principles">
+        <div class="principle-card reveal">
+          <div class="principle-num">1</div>
+          <div>
+            <h3 class="principle-title">Assume Breach</h3>
+            <p class="principle-body">We design assuming any single component can be compromised. Lateral movement is prevented through strict network segmentation, least-privilege identities, and encrypted channels between every service.</p>
+          </div>
+        </div>
+        <div class="principle-card reveal">
+          <div class="principle-num">2</div>
+          <div>
+            <h3 class="principle-title">Defence in Depth</h3>
+            <p class="principle-body">Seven independent encryption layers means an attacker who bypasses one faces six more. No single vulnerability results in data exposure. Each layer has independent key management.</p>
+          </div>
+        </div>
+        <div class="principle-card reveal">
+          <div class="principle-num">3</div>
+          <div>
+            <h3 class="principle-title">Least Privilege by Default</h3>
+            <p class="principle-body">Every service account, API token, and human operator starts with zero permissions. Access is granted specifically, scoped minimally, and expires automatically. No standing elevated access.</p>
+          </div>
+        </div>
+        <div class="principle-card reveal">
+          <div class="principle-num">4</div>
+          <div>
+            <h3 class="principle-title">Cryptographic Verification Everywhere</h3>
+            <p class="principle-body">Model packages, configuration files, and update bundles are all signed and verified before execution. No unsigned artifact is loaded into memory. Trust is mathematical, not organisational.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-strip">
+    <div>
+      <h2 class="cta-strip-title">Security Concerns?<br/><em>Let's Architect Together.</em></h2>
+      <p class="cta-strip-body">Request a Security Architecture Briefing — a 60-minute session with our security team where we walk through your specific threat model, compliance requirements, and how our architecture addresses each one.</p>
+    </div>
+    <div class="cta-actions">
+      <a href="contact.html" class="btn-primary">Request Security Briefing</a>
+      <a href="research.html" class="btn-ghost">Read Security Research</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo"><span></span>AntimKros</a>
+        <p>AI research and infrastructure for regulated industries. Private, low-cost, flexible intelligence systems that grow with your team.</p>
+      </div>
+      <div>
+        <p class="footer-col-title">Security</p>
+        <ul class="footer-links">
+          <li><a href="#deployment">Deployment Modes</a></li>
+          <li><a href="#encryption">Encryption</a></li>
+          <li><a href="#airgap">Air-Gap</a></li>
+          <li><a href="#compliance">Compliance</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Company</p>
+        <ul class="footer-links">
+          <li><a href="solutions.html">Solutions</a></li>
+          <li><a href="research.html">Research Lab</a></li>
+          <li><a href="case-studies.html">Case Studies</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Contact</p>
+        <ul class="footer-links">
+          <li><a href="contact.html">Request Audit</a></li>
+          <li><a href="contact.html#security">Security Briefing</a></li>
+          <li><a href="mailto:enabler@antimkros.in">enabler@antimkros.in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 AntimKros. All rights reserved.</p>
+      <a href="docs.html" class="footer-docs">Technical Documentation & API →</a>
+    </div>
+  </footer>
+
+  <script>
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove', e => {
+      mx=e.clientX; my=e.clientY;
+      cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+    });
+    function animRing(){
+      rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+      ring.style.left=rx+'px'; ring.style.top=ry+'px';
+      requestAnimationFrame(animRing);
+    }
+    animRing();
+    document.querySelectorAll('a,button').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{cursor.style.width='16px';cursor.style.height='16px';});
+      el.addEventListener('mouseleave',()=>{cursor.style.width='10px';cursor.style.height='10px';});
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach((e,i)=>{
+        if(e.isIntersecting){
+          setTimeout(()=>e.target.classList.add('visible'), i*80);
+          obs.unobserve(e.target);
+        }
+      });
+    },{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+    reveals.forEach(el=>obs.observe(el));
+  </script>
+</body>
+</html>

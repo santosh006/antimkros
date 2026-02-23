@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Case Studies — AntimKros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #080808;
+      --surface: #111111;
+      --border: rgba(240,234,214,0.1);
+      --bone: #F0EAD6;
+      --bone-dim: rgba(240,234,214,0.55);
+      --bone-faint: rgba(240,234,214,0.05);
+      --gold: #C9A96E;
+      --gold-dim: rgba(201,169,110,0.3);
+      --gold-faint: rgba(201,169,110,0.07);
+      --green: #4CAF82;
+      --green-dim: rgba(76,175,130,0.2);
+      --green-faint: rgba(76,175,130,0.06);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--black); color: var(--bone); font-family: 'Syne', sans-serif; overflow-x: hidden; cursor: none; }
+    .cursor { position: fixed; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); transition: width .3s, height .3s; }
+    .cursor-ring { position: fixed; width: 36px; height: 36px; border: 1px solid rgba(201,169,110,.5); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: all .15s ease; }
+    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:1000; opacity:.6; }
+
+    /* NAV */
+    nav { position:fixed; top:0; left:0; right:0; z-index:900; padding:22px 48px; display:flex; align-items:center; justify-content:space-between; background:rgba(8,8,8,.92); border-bottom:1px solid var(--border); backdrop-filter:blur(12px); }
+    .nav-logo { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:300; letter-spacing:.12em; color:var(--bone); text-decoration:none; display:flex; align-items:center; gap:10px; }
+    .nav-logo span { display:inline-block; width:28px; height:28px; border:1px solid var(--gold); border-radius:50%; position:relative; }
+    .nav-logo span::after { content:''; position:absolute; inset:4px; background:var(--gold); border-radius:50%; animation:pulse 2.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.4;transform:scale(.6);} }
+    .nav-links { display:flex; gap:36px; list-style:none; }
+    .nav-links a { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; color:var(--bone-dim); text-decoration:none; transition:color .3s; }
+    .nav-links a:hover, .nav-links a.active { color:var(--gold); }
+    .nav-cta { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; padding:10px 24px; border:1px solid var(--gold); color:var(--gold); text-decoration:none; transition:all .3s; }
+    .nav-cta:hover { background:var(--gold); color:var(--black); }
+
+    /* HERO */
+    .page-hero { padding:160px 80px 80px; border-bottom:1px solid var(--border); position:relative; overflow:hidden; }
+    .hero-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(240,234,214,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(240,234,214,.03) 1px,transparent 1px); background-size:60px 60px; }
+    .eyebrow { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.25em; color:var(--gold); text-transform:uppercase; margin-bottom:24px; display:flex; align-items:center; gap:16px; }
+    .eyebrow::before { content:''; display:block; width:40px; height:1px; background:var(--gold); }
+    .page-title { font-family:'Cormorant Garamond',serif; font-size:clamp(48px,5.5vw,80px); font-weight:300; line-height:1.05; position:relative; z-index:1; }
+    .page-title em { font-style:italic; color:var(--gold); }
+    .page-desc { font-size:15px; line-height:1.8; color:var(--bone-dim); max-width:520px; margin-top:20px; position:relative; z-index:1; }
+
+    /* FILTER TABS */
+    .filter-bar { padding:0 80px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; gap:0; }
+    .filter-btn { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--bone-dim); background:none; border:none; padding:18px 28px; cursor:none; border-bottom:2px solid transparent; transition:all .3s; }
+    .filter-btn.active, .filter-btn:hover { color:var(--gold); border-bottom-color:var(--gold); }
+
+    /* CASE STUDY CARDS */
+    .cases-section { padding:80px; }
+    .cases-grid { display:flex; flex-direction:column; gap:2px; }
+
+    .case-card {
+      display:grid; grid-template-columns:1fr 1fr 1fr;
+      border:1px solid var(--border); background:var(--surface);
+      transition:border-color .3s; overflow:hidden;
+    }
+    .case-card:hover { border-color:rgba(201,169,110,.25); }
+    .case-card[data-industry="fintech"] .case-accent { background:var(--gold-faint); border-right:1px solid var(--border); }
+    .case-card[data-industry="health"] .case-accent { background:var(--green-faint); border-right:1px solid var(--border); }
+    .case-card[data-industry="logistics"] .case-accent { background:rgba(120,100,200,.06); border-right:1px solid var(--border); }
+    .case-card[data-industry="legal"] .case-accent { background:rgba(200,130,80,.06); border-right:1px solid var(--border); }
+
+    .case-accent { padding:40px 36px; display:flex; flex-direction:column; justify-content:space-between; }
+    .case-industry { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.22em; color:var(--gold); text-transform:uppercase; margin-bottom:16px; }
+    .case-title { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:400; line-height:1.3; margin-bottom:24px; }
+    .case-metrics { display:flex; gap:20px; }
+    .case-metric { display:flex; flex-direction:column; gap:4px; }
+    .metric-num { font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:300; line-height:1; color:var(--bone); }
+    .metric-lbl { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.15em; color:var(--gold); text-transform:uppercase; }
+
+    .case-body { padding:40px 36px; border-right:1px solid var(--border); }
+    .flow-step { margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+    .flow-step:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+    .flow-label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.2em; color:var(--gold); text-transform:uppercase; margin-bottom:6px; }
+    .flow-text { font-size:13px; line-height:1.65; color:var(--bone-dim); }
+
+    .case-results { padding:40px 36px; }
+    .results-title { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.22em; color:var(--gold); text-transform:uppercase; margin-bottom:20px; }
+    .result-bar-group { margin-bottom:18px; }
+    .result-bar-header { display:flex; justify-content:space-between; margin-bottom:6px; }
+    .result-bar-name { font-size:12px; font-weight:500; }
+    .result-bar-val { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--green); }
+    .bar-track { height:6px; background:var(--bone-faint); border:1px solid var(--border); }
+    .bar-fill { height:100%; background:var(--gold); transform:scaleX(0); transform-origin:left; transition:transform 1.2s cubic-bezier(.16,1,.3,1); }
+    .bar-fill.green { background:var(--green); }
+    .bar-fill.animated { transform:scaleX(1); }
+
+    /* INSIGHT STRIP */
+    .insight-strip {
+      margin:0 80px 80px;
+      display:grid; grid-template-columns:repeat(4,1fr); gap:2px;
+    }
+    .insight-item { padding:28px; background:var(--surface); border:1px solid var(--border); text-align:center; }
+    .insight-num { font-family:'Cormorant Garamond',serif; font-size:44px; font-weight:300; color:var(--gold); line-height:1; }
+    .insight-label { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.2em; color:var(--bone-dim); text-transform:uppercase; margin-top:6px; }
+
+    /* CTA */
+    .cta-strip { padding:80px; background:var(--surface); border-top:1px solid var(--border); display:grid; grid-template-columns:1fr auto; gap:60px; align-items:center; }
+    .cta-title { font-family:'Cormorant Garamond',serif; font-size:clamp(30px,3.2vw,44px); font-weight:300; line-height:1.15; }
+    .cta-title em { font-style:italic; color:var(--gold); }
+    .cta-body { font-size:14px; line-height:1.75; color:var(--bone-dim); margin-top:10px; }
+    .cta-actions { display:flex; flex-direction:column; gap:12px; align-items:flex-end; }
+    .btn-primary { padding:16px 36px; background:var(--gold); color:var(--black); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; text-decoration:none; display:inline-block; transition:all .3s; }
+    .btn-primary:hover { background:var(--bone); transform:translateY(-2px); }
+    .btn-ghost { padding:16px 36px; border:1px solid var(--border); color:var(--bone-dim); font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; text-decoration:none; display:inline-block; transition:all .3s; }
+    .btn-ghost:hover { border-color:var(--gold); color:var(--gold); }
+
+    /* FOOTER */
+    footer { padding:60px 80px 40px; border-top:1px solid var(--border); background:var(--surface); }
+    .footer-top { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:60px; margin-bottom:60px; }
+    .footer-brand p { font-size:13px; line-height:1.75; color:var(--bone-dim); margin-top:16px; max-width:280px; }
+    .footer-col-title { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.3em; color:var(--gold); text-transform:uppercase; margin-bottom:20px; }
+    .footer-links { list-style:none; display:flex; flex-direction:column; gap:12px; }
+    .footer-links a { font-size:13px; color:var(--bone-dim); text-decoration:none; transition:color .3s; }
+    .footer-links a:hover { color:var(--bone); }
+    .footer-bottom { display:flex; justify-content:space-between; align-items:center; padding-top:32px; border-top:1px solid var(--border); }
+    .footer-bottom p { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.15em; color:rgba(240,234,214,.3); }
+    .footer-docs { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.15em; color:var(--gold); text-decoration:none; text-transform:uppercase; }
+    .footer-docs:hover { color:var(--bone); }
+
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <nav>
+    <a href="index.html" class="nav-logo"><span></span>AntimKros</a>
+    <ul class="nav-links">
+      <li><a href="solutions.html">Solutions</a></li>
+      <li><a href="research.html">Research Lab</a></li>
+      <li><a href="security.html">Security</a></li>
+      <li><a href="case-studies.html" class="active">Case Studies</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Request Audit</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="page-hero">
+    <div class="hero-grid"></div>
+    <p class="eyebrow">Case Studies</p>
+    <h1 class="page-title">Real Problems.<br/><em>Concrete Results.</em></h1>
+    <p class="page-desc">Abstract AI is hard to sell. These are the actual problems our clients brought us — and what happened in 12 months.</p>
+  </section>
+
+  <!-- FILTER -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterCases(this,'all')">All Industries</button>
+    <button class="filter-btn" onclick="filterCases(this,'fintech')">Fintech</button>
+    <button class="filter-btn" onclick="filterCases(this,'health')">Healthcare</button>
+    <button class="filter-btn" onclick="filterCases(this,'logistics')">Logistics</button>
+    <button class="filter-btn" onclick="filterCases(this,'legal')">Legal</button>
+  </div>
+
+  <!-- CASES -->
+  <div class="cases-section">
+    <div class="cases-grid">
+
+      <!-- FINTECH -->
+      <div class="case-card reveal" data-industry="fintech">
+        <div class="case-accent">
+          <div>
+            <p class="case-industry">🏦 Fintech</p>
+            <h2 class="case-title">Automated Loan Document Review at a Regional Bank</h2>
+          </div>
+          <div class="case-metrics">
+            <div class="case-metric">
+              <span class="metric-num">91%</span>
+              <span class="metric-lbl">Cost Cut</span>
+            </div>
+            <div class="case-metric">
+              <span class="metric-num">14×</span>
+              <span class="metric-lbl">Faster</span>
+            </div>
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="flow-step">
+            <p class="flow-label">The Problem</p>
+            <p class="flow-text">A mid-size bank was paying a team of 12 analysts 40+ hours/week to review and classify 3,000 loan applications monthly. Error rate was 6.2%. GPT-4 trials failed compliance review — data couldn't leave the perimeter.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">The SLM Solution</p>
+            <p class="flow-text">We trained a 3B parameter SLM on 8 years of the bank's historical loan documents. Deployed on-premise inside their existing VMware cluster. Model classifies, flags risk, and routes — with a human review layer for edge cases.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">12-Month Result</p>
+            <p class="flow-text">Processing time dropped from 48 min to 3.4 min per application. Error rate fell to 0.8%. The team of 12 was redeployed to relationship banking — zero redundancies.</p>
+          </div>
+        </div>
+        <div class="case-results">
+          <p class="results-title">// Performance Delta</p>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Processing Time Reduction</span><span class="result-bar-val">−93%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:93%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Error Rate Reduction</span><span class="result-bar-val">−87%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:87%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Operational Cost Savings</span><span class="result-bar-val">−91%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:91%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Model Accuracy at Month 12</span><span class="result-bar-val">99.2%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:99.2%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HEALTHCARE -->
+      <div class="case-card reveal" data-industry="health">
+        <div class="case-accent">
+          <div>
+            <p class="case-industry">🏥 Healthcare</p>
+            <h2 class="case-title">Clinical Note Summarisation for a Hospital Network</h2>
+          </div>
+          <div class="case-metrics">
+            <div class="case-metric">
+              <span class="metric-num">78%</span>
+              <span class="metric-lbl">Time Saved</span>
+            </div>
+            <div class="case-metric">
+              <span class="metric-num">0</span>
+              <span class="metric-lbl">PHI Breaches</span>
+            </div>
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="flow-step">
+            <p class="flow-label">The Problem</p>
+            <p class="flow-text">Physicians at a 6-hospital network were spending 2.1 hrs/day on documentation. Consumer AI tools were banned by the CISO. An internal Epic plugin attempt stalled for 14 months in compliance review.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">The SLM Solution</p>
+            <p class="flow-text">A 1.3B clinical SLM trained on de-identified notes from the network's own EHR. Deployed air-gapped within each hospital's server room. Integration via Epic SMART-on-FHIR with a fully offline inference endpoint.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">12-Month Result</p>
+            <p class="flow-text">Physicians reclaimed 97 minutes/day on average. Patient throughput increased 22%. The model passed HIPAA audit on first attempt with zero findings. Rolled out to all 6 hospitals in month 9.</p>
+          </div>
+        </div>
+        <div class="case-results">
+          <p class="results-title">// Performance Delta</p>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Documentation Time Saved</span><span class="result-bar-val">−78%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:78%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Patient Throughput Increase</span><span class="result-bar-val">+22%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:22%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Clinical Accuracy</span><span class="result-bar-val">97.8%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:97.8%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Compliance Audit Score</span><span class="result-bar-val">100%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:100%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOGISTICS -->
+      <div class="case-card reveal" data-industry="logistics">
+        <div class="case-accent">
+          <div>
+            <p class="case-industry">📦 Logistics</p>
+            <h2 class="case-title">Predictive Freight Delay Intelligence for a 3PL Operator</h2>
+          </div>
+          <div class="case-metrics">
+            <div class="case-metric">
+              <span class="metric-num">$2.1M</span>
+              <span class="metric-lbl">Saved / Yr</span>
+            </div>
+            <div class="case-metric">
+              <span class="metric-num">68%</span>
+              <span class="metric-lbl">Fewer Delays</span>
+            </div>
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="flow-step">
+            <p class="flow-label">The Problem</p>
+            <p class="flow-text">A third-party logistics firm was absorbing $3.4M/year in penalty charges from delayed shipments. Delay prediction was manual — dispatchers relied on gut feel across 14,000 monthly shipments.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">The SLM Solution</p>
+            <p class="flow-text">An ML pipeline combining a time-series forecasting model with a fine-tuned SLM trained on historical shipment data, carrier performance records, and weather event logs. Deployed as a real-time API inside their TMS.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">12-Month Result</p>
+            <p class="flow-text">Delay prediction accuracy reached 89.3%. Penalty charges dropped to $1.3M — a $2.1M annual saving. The model now processes 14,000 shipments daily at 72ms average latency.</p>
+          </div>
+        </div>
+        <div class="case-results">
+          <p class="results-title">// Performance Delta</p>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Delay Prediction Accuracy</span><span class="result-bar-val">89.3%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:89.3%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Penalty Charge Reduction</span><span class="result-bar-val">−68%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:68%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Dispatcher Workload Reduced</span><span class="result-bar-val">−54%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:54%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Inference Latency (p99)</span><span class="result-bar-val">72ms</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:7.2%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEGAL -->
+      <div class="case-card reveal" data-industry="legal">
+        <div class="case-accent">
+          <div>
+            <p class="case-industry">⚖️ Legal</p>
+            <h2 class="case-title">Contract Review Automation for an International Law Firm</h2>
+          </div>
+          <div class="case-metrics">
+            <div class="case-metric">
+              <span class="metric-num">83%</span>
+              <span class="metric-lbl">Faster Review</span>
+            </div>
+            <div class="case-metric">
+              <span class="metric-num">5×</span>
+              <span class="metric-lbl">More Volume</span>
+            </div>
+          </div>
+        </div>
+        <div class="case-body">
+          <div class="flow-step">
+            <p class="flow-label">The Problem</p>
+            <p class="flow-text">A 200-partner firm was turning away contract review work during peak periods. Associates averaged 4.5 hours per commercial contract. Cloud-based legal AI tools failed Bar ethics rules on confidentiality.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">The SLM Solution</p>
+            <p class="flow-text">A 4B parameter SLM trained on the firm's own contract archive and anonymised precedent library. Deployed within their private cloud VPC. Integrated into their document management system via a secure REST API.</p>
+          </div>
+          <div class="flow-step">
+            <p class="flow-label">12-Month Result</p>
+            <p class="flow-text">Average review time fell from 4.5 hrs to 47 minutes. Associates now handle 5× more contracts per week. The firm won two new enterprise retainers citing faster turnaround as the deciding factor.</p>
+          </div>
+        </div>
+        <div class="case-results">
+          <p class="results-title">// Performance Delta</p>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Review Time Reduction</span><span class="result-bar-val">−83%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:83%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Contract Volume Increase</span><span class="result-bar-val">+400%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:80%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Clause Extraction Accuracy</span><span class="result-bar-val">96.4%</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:96.4%"></div></div>
+          </div>
+          <div class="result-bar-group">
+            <div class="result-bar-header"><span class="result-bar-name">Client Satisfaction Score</span><span class="result-bar-val">4.9/5</span></div>
+            <div class="bar-track"><div class="bar-fill green" style="width:98%"></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AGGREGATE RESULTS -->
+  <div class="insight-strip">
+    <div class="insight-item reveal">
+      <div class="insight-num">73%</div>
+      <div class="insight-label">Avg Cost Reduction</div>
+    </div>
+    <div class="insight-item reveal">
+      <div class="insight-num">12×</div>
+      <div class="insight-label">Avg Speed Increase</div>
+    </div>
+    <div class="insight-item reveal">
+      <div class="insight-num">0</div>
+      <div class="insight-label">Data Breaches</div>
+    </div>
+    <div class="insight-item reveal">
+      <div class="insight-num">100%</div>
+      <div class="insight-label">Compliance Pass Rate</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-strip">
+    <div>
+      <h2 class="cta-title">Your Industry.<br/><em>Your Use Case. Let's Build It.</em></h2>
+      <p class="cta-body">Request a Model Feasibility Audit and we'll map your exact problem to a solution architecture — with projected ROI before you commit to anything.</p>
+    </div>
+    <div class="cta-actions">
+      <a href="contact.html" class="btn-primary">Request Feasibility Audit</a>
+      <a href="solutions.html" class="btn-ghost">Explore Solutions</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo"><span></span>AntimKros</a>
+        <p>AI research and infrastructure for regulated industries. Private, low-cost, flexible intelligence systems that grow with your team.</p>
+      </div>
+      <div>
+        <p class="footer-col-title">Solutions</p>
+        <ul class="footer-links">
+          <li><a href="solutions.html#slm">Custom SLMs</a></li>
+          <li><a href="solutions.html#pipeline">ML Pipelines</a></li>
+          <li><a href="solutions.html#evolution">12-Month Plan</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Company</p>
+        <ul class="footer-links">
+          <li><a href="research.html">Research Lab</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="case-studies.html">Case Studies</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Contact</p>
+        <ul class="footer-links">
+          <li><a href="contact.html">Request Audit</a></li>
+          <li><a href="mailto:enabler@antimkros.in">henabler@antimkros.in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 AntimKros. All rights reserved.</p>
+      <a href="docs.html" class="footer-docs">Technical Documentation & API →</a>
+    </div>
+  </footer>
+
+  <script>
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cursor.style.left=mx+'px'; cursor.style.top=my+'px'; });
+    (function animRing(){ rx+=(mx-rx)*.12; ry+=(my-ry)*.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animRing); })();
+    document.querySelectorAll('a,button').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{cursor.style.width='16px';cursor.style.height='16px';});
+      el.addEventListener('mouseleave',()=>{cursor.style.width='10px';cursor.style.height='10px';});
+    });
+
+    // Filter
+    function filterCases(btn, industry) {
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.case-card').forEach(card=>{
+        card.classList.toggle('hidden', industry !== 'all' && card.dataset.industry !== industry);
+      });
+    }
+
+    // Reveal + bar animation
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach((e,i)=>{
+        if(e.isIntersecting){
+          setTimeout(()=>{
+            e.target.classList.add('visible');
+            e.target.querySelectorAll('.bar-fill').forEach(b=>b.classList.add('animated'));
+          }, i*100);
+          obs.unobserve(e.target);
+        }
+      });
+    },{threshold:0.08});
+    document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  </script>
+</body>
+</html>
