@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Research Lab — AntimKros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #080808;
+      --deep: #0d0d0d;
+      --surface: #111111;
+      --surface2: #141414;
+      --border: rgba(240, 234, 214, 0.1);
+      --bone: #F0EAD6;
+      --bone-dim: rgba(240, 234, 214, 0.55);
+      --bone-faint: rgba(240, 234, 214, 0.05);
+      --gold: #C9A96E;
+      --gold-dim: rgba(201, 169, 110, 0.3);
+      --gold-faint: rgba(201, 169, 110, 0.07);
+      --green: #6FCF97;
+      --red: #EB5757;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--bone);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+    .cursor {
+      position: fixed; width: 10px; height: 10px;
+      background: var(--gold); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: width .3s, height .3s;
+    }
+    .cursor-ring {
+      position: fixed; width: 36px; height: 36px;
+      border: 1px solid rgba(201,169,110,.5); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: all .15s ease;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 1000; opacity: .6;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+      padding: 22px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(8,8,8,.92); border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px; font-weight: 300; letter-spacing: .12em;
+      color: var(--bone); text-decoration: none;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-logo span {
+      display: inline-block; width: 28px; height: 28px;
+      border: 1px solid var(--gold); border-radius: 50%; position: relative;
+    }
+    .nav-logo span::after {
+      content: ''; position: absolute; inset: 4px;
+      background: var(--gold); border-radius: 50%;
+      animation: pulse-dot 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:.4;transform:scale(.6);}
+    }
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--bone-dim); text-decoration: none; transition: color .3s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+    .nav-cta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      padding: 10px 24px; border: 1px solid var(--gold);
+      color: var(--gold); text-decoration: none; transition: all .3s;
+    }
+    .nav-cta:hover { background: var(--gold); color: var(--black); }
+
+    /* PAGE HERO */
+    .page-hero {
+      padding: 160px 80px 100px;
+      position: relative; overflow: hidden;
+      border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: end;
+    }
+    .hero-grid-bg {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(240,234,214,.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(240,234,214,.03) 1px,transparent 1px);
+      background-size: 60px 60px;
+    }
+    .page-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: .25em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .page-eyebrow::before { content:''; display:block; width:40px; height:1px; background:var(--gold); }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px,5.5vw,80px);
+      font-weight: 300; line-height: 1.05; position: relative; z-index: 1;
+    }
+    .page-title em { font-style: italic; color: var(--gold); }
+    .page-desc {
+      font-size: 15px; line-height: 1.85; color: var(--bone-dim);
+      margin-top: 24px; position: relative; z-index: 1;
+    }
+    .hero-stats-col {
+      display: flex; flex-direction: column; gap: 32px;
+      position: relative; z-index: 1; padding-bottom: 8px;
+    }
+    .hero-stat-row {
+      display: flex; align-items: flex-start; gap: 24px;
+      padding: 28px; border: 1px solid var(--border);
+      background: var(--bone-faint); transition: border-color .3s;
+    }
+    .hero-stat-row:hover { border-color: var(--gold-dim); }
+    .stat-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 52px; font-weight: 300; line-height: 1; color: var(--gold);
+      flex-shrink: 0; min-width: 100px;
+    }
+    .stat-meta { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
+    .stat-name { font-size: 15px; font-weight: 600; letter-spacing: .03em; }
+    .stat-note { font-size: 12px; color: var(--bone-dim); line-height: 1.5; }
+
+    /* SHARED */
+    .section { padding: 100px 80px; border-bottom: 1px solid var(--border); }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .3em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(34px,3.8vw,52px);
+      font-weight: 300; line-height: 1.1; margin-bottom: 16px;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-intro {
+      font-size: 15px; line-height: 1.8; color: var(--bone-dim);
+      max-width: 640px; margin-bottom: 64px;
+    }
+
+    /* WHITEPAPERS */
+    .papers-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+    }
+    .paper-card {
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 44px; transition: border-color .3s; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 0;
+    }
+    .paper-card:hover { border-color: rgba(201,169,110,.25); }
+    .paper-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      transform: scaleX(0); transform-origin: left; transition: transform .4s;
+    }
+    .paper-card:hover::before { transform: scaleX(1); }
+    .paper-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .2em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .paper-tag-dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; }
+    .paper-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px; font-weight: 400; line-height: 1.3; margin-bottom: 14px;
+    }
+    .paper-abstract {
+      font-size: 13px; line-height: 1.75; color: var(--bone-dim); flex: 1; margin-bottom: 28px;
+    }
+    .paper-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .paper-info {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .12em; color: var(--bone-dim);
+    }
+    .paper-dl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: var(--gold);
+      text-decoration: none; text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px; transition: gap .3s;
+    }
+    .paper-dl:hover { gap: 14px; }
+
+    /* FEATURED PAPER */
+    .featured-paper {
+      background: var(--gold-faint);
+      border: 1px solid var(--gold-dim);
+      padding: 56px; margin-bottom: 2px;
+      display: grid; grid-template-columns: 1fr auto; gap: 60px; align-items: center;
+    }
+    .featured-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .25em; color: var(--black);
+      background: var(--gold); padding: 4px 12px; text-transform: uppercase;
+      display: inline-block; margin-bottom: 20px;
+    }
+    .featured-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(26px,2.8vw,38px); font-weight: 300; line-height: 1.2;
+      margin-bottom: 16px;
+    }
+    .featured-desc { font-size: 14px; line-height: 1.8; color: var(--bone-dim); margin-bottom: 28px; }
+    .featured-authors {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: var(--bone-dim);
+      text-transform: uppercase; margin-bottom: 28px;
+    }
+    .btn-primary {
+      padding: 16px 36px; background: var(--gold); color: var(--black);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+      text-decoration: none; display: inline-block; transition: all .3s;
+    }
+    .btn-primary:hover { background: var(--bone); transform: translateY(-2px); }
+    .btn-ghost {
+      padding: 16px 36px; border: 1px solid var(--border);
+      color: var(--bone-dim); font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+      text-decoration: none; display: inline-block; transition: all .3s;
+    }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* METRICS COVER SHEET */
+    .featured-metrics {
+      display: flex; flex-direction: column; gap: 16px; min-width: 200px;
+    }
+    .metric-box {
+      padding: 20px 24px; background: var(--black);
+      border: 1px solid var(--border); text-align: center;
+    }
+    .metric-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px; font-weight: 300; color: var(--bone); line-height: 1;
+    }
+    .metric-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .18em; color: var(--gold);
+      text-transform: uppercase; margin-top: 6px;
+    }
+
+    /* BENCHMARK SECTION */
+    .benchmark-section { background: var(--surface); }
+    .benchmark-layout {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;
+    }
+
+    /* Bar chart */
+    .bar-chart { display: flex; flex-direction: column; gap: 20px; }
+    .bar-group { display: flex; flex-direction: column; gap: 8px; }
+    .bar-label {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .bar-name { font-size: 13px; font-weight: 500; }
+    .bar-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px; color: var(--gold);
+    }
+    .bar-track {
+      height: 8px; background: var(--bone-faint);
+      border: 1px solid var(--border); position: relative; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; background: var(--gold);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 1.2s cubic-bezier(.16,1,.3,1);
+    }
+    .bar-fill.animated { transform: scaleX(1); }
+    .bar-fill.dim { background: rgba(240,234,214,.2); }
+    .bar-fill.enemy { background: rgba(240,234,214,.15); }
+
+    .benchmark-tabs {
+      display: flex; gap: 0; margin-bottom: 36px;
+      border: 1px solid var(--border);
+    }
+    .bench-tab {
+      flex: 1; padding: 12px; text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+      color: var(--bone-dim); background: none; border: none;
+      cursor: none; transition: all .3s; border-right: 1px solid var(--border);
+    }
+    .bench-tab:last-child { border-right: none; }
+    .bench-tab.active, .bench-tab:hover { color: var(--gold); background: var(--gold-faint); }
+
+    .benchmark-right { display: flex; flex-direction: column; gap: 24px; }
+    .insight-card {
+      padding: 28px; border: 1px solid var(--border);
+      background: var(--black); transition: border-color .3s;
+    }
+    .insight-card:hover { border-color: var(--gold-dim); }
+    .insight-icon { font-size: 22px; margin-bottom: 12px; }
+    .insight-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .insight-body { font-size: 13px; line-height: 1.7; color: var(--bone-dim); }
+    .insight-highlight {
+      display: inline-block; margin-top: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: var(--gold);
+    }
+
+    /* ETHICS / STANCE SECTION */
+    .ethics-section { background: var(--black); }
+    .ethics-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 64px;
+    }
+    .ethics-card {
+      padding: 44px 36px; background: var(--surface);
+      border: 1px solid var(--border); position: relative; overflow: hidden;
+      transition: border-color .3s;
+    }
+    .ethics-card:hover { border-color: rgba(201,169,110,.2); }
+    .ethics-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 80px; font-weight: 300; line-height: 1;
+      color: rgba(201,169,110,.06); margin-bottom: -20px;
+    }
+    .ethics-icon { font-size: 28px; margin-bottom: 20px; display: block; }
+    .ethics-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .ethics-body { font-size: 13px; line-height: 1.75; color: var(--bone-dim); }
+    .ethics-principle {
+      margin-top: 20px; padding: 12px 16px;
+      border-left: 2px solid var(--gold);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .12em; color: var(--gold);
+      text-transform: uppercase; background: var(--gold-faint);
+    }
+
+    .ethics-manifesto {
+      margin-top: 64px; padding: 56px;
+      border: 1px solid var(--gold-dim); background: var(--gold-faint);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+    }
+    .manifesto-quote {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(22px,2.4vw,32px); font-weight: 300; line-height: 1.4;
+      font-style: italic;
+    }
+    .manifesto-quote::before { content: '\201C'; color: var(--gold); font-size: 1.5em; }
+    .manifesto-quote::after  { content: '\201D'; color: var(--gold); font-size: 1.5em; }
+    .manifesto-body { font-size: 14px; line-height: 1.8; color: var(--bone-dim); }
+    .manifesto-sig {
+      margin-top: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .2em; color: var(--gold); text-transform: uppercase;
+    }
+
+    /* TEAM / EXPERTISE */
+    .team-section { background: var(--surface); }
+    .team-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 64px;
+    }
+    .team-card {
+      padding: 36px 28px; background: var(--black);
+      border: 1px solid var(--border); transition: border-color .3s;
+    }
+    .team-card:hover { border-color: var(--gold-dim); }
+    .team-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--gold-faint); border: 1px solid var(--gold-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; margin-bottom: 20px;
+    }
+    .team-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .team-role {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .18em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .team-bio { font-size: 12px; line-height: 1.65; color: var(--bone-dim); }
+    .team-pubs {
+      margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: .12em; color: var(--bone-dim);
+    }
+
+    /* CTA strip */
+    .cta-strip {
+      padding: 100px 80px; background: var(--black);
+      border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 60px; align-items: center;
+    }
+    .cta-strip-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px,3.5vw,48px); font-weight: 300; line-height: 1.15;
+    }
+    .cta-strip-title em { font-style: italic; color: var(--gold); }
+    .cta-strip-body { font-size: 14px; line-height: 1.75; color: var(--bone-dim); margin-top: 12px; }
+    .cta-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+
+    /* FOOTER */
+    footer {
+      padding: 60px 80px 40px; border-top: 1px solid var(--border); background: var(--surface);
+    }
+    .footer-top {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 60px; margin-bottom: 60px;
+    }
+    .footer-brand p {
+      font-size: 13px; line-height: 1.75; color: var(--bone-dim); margin-top: 16px; max-width: 280px;
+    }
+    .footer-col-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .3em; color: var(--gold);
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .footer-links a { font-size: 13px; color: var(--bone-dim); text-decoration: none; transition: color .3s; }
+    .footer-links a:hover { color: var(--bone); }
+    .footer-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 32px; border-top: 1px solid var(--border);
+    }
+    .footer-bottom p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: rgba(240,234,214,.3);
+    }
+    .footer-docs {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: .15em; color: var(--gold);
+      text-decoration: none; text-transform: uppercase;
+    }
+    .footer-docs:hover { color: var(--bone); }
+
+    /* Reveal */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo"><span></span>AntimKros</a>
+    <ul class="nav-links">
+      <li><a href="solutions.html">Solutions</a></li>
+      <li><a href="research.html" class="active">Research Lab</a></li>
+      <li><a href="security.html">Security</a></li>
+      <li><a href="case-studies.html">Case Studies</a></li>
+    </ul>
+    <a href="contact.html" class="nav-cta">Request Audit</a>
+  </nav>
+
+  <!-- PAGE HERO -->
+  <section class="page-hero">
+    <div class="hero-grid-bg"></div>
+    <div>
+      <p class="page-eyebrow">Research Lab</p>
+      <h1 class="page-title">We Are the<br/><em>Architects,</em><br/>Not Just Builders</h1>
+      <p class="page-desc">Our research division publishes benchmarks, white papers, and ethical frameworks that set the standard for private enterprise AI. Clients don't just buy our tools — they buy two decades of distilled expertise.</p>
+    </div>
+    <div class="hero-stats-col">
+      <div class="hero-stat-row">
+        <div class="stat-val">18+</div>
+        <div class="stat-meta">
+          <span class="stat-name">Published Papers</span>
+          <span class="stat-note">Peer-reviewed research on SLM efficiency, private deployment, and domain-specific fine-tuning.</span>
+        </div>
+      </div>
+      <div class="hero-stat-row">
+        <div class="stat-val">94%</div>
+        <div class="stat-meta">
+          <span class="stat-name">Benchmark Win Rate</span>
+          <span class="stat-note">Our SLMs outperform GPT-4 on domain-specific tasks in 94% of client evaluation suites.</span>
+        </div>
+      </div>
+      <div class="hero-stat-row">
+        <div class="stat-val">6</div>
+        <div class="stat-meta">
+          <span class="stat-name">Ethics Frameworks</span>
+          <span class="stat-note">Published AI governance frameworks adopted by regulated industry bodies across 3 continents.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── WHITEPAPERS ─── -->
+  <section class="section" id="papers">
+    <p class="section-label reveal">Knowledge Base</p>
+    <h2 class="section-title reveal">White Papers &<br/><em>Research Publications</em></h2>
+    <p class="section-intro reveal">Original research from our lab — freely available to enterprise teams evaluating private AI adoption. Each paper includes reproducible benchmarks and implementation guidance.</p>
+
+    <!-- Featured Paper -->
+    <div class="featured-paper reveal">
+      <div>
+        <span class="featured-badge">Featured Research · 2025</span>
+        <h2 class="featured-title">Sovereign Intelligence: A Framework for Deploying Small Language Models in Regulated Enterprises</h2>
+        <p class="featured-desc">A comprehensive 48-page study comparing deployment architectures, security postures, and performance profiles of custom SLMs versus public LLM APIs across fintech, healthcare, and legal verticals. Includes a replicable evaluation harness and cost modeling toolkit.</p>
+        <p class="featured-authors">Authors: AntimKros Research Division — Dr. A. Mercer, R. Vasquez, S. Okafor, T. Lin</p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;">
+          <a href="#" class="btn-primary">Download PDF</a>
+          <a href="#" class="btn-ghost">View Abstract</a>
+        </div>
+      </div>
+      <div class="featured-metrics">
+        <div class="metric-box">
+          <div class="metric-val">48</div>
+          <div class="metric-label">Pages</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">12</div>
+          <div class="metric-label">Benchmarks</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">3</div>
+          <div class="metric-label">Industries</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-val">2.4K</div>
+          <div class="metric-label">Downloads</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Papers Grid -->
+    <div class="papers-grid">
+      <div class="paper-card reveal">
+        <span class="paper-tag"><span class="paper-tag-dot"></span>Efficiency · 2025</span>
+        <h3 class="paper-title">Quantization Without Compromise: INT4 SLMs at Production Accuracy</h3>
+        <p class="paper-abstract">We demonstrate that aggressive 4-bit quantization of domain-fine-tuned models loses less than 1.2% accuracy on targeted tasks while reducing VRAM requirements by 75%, enabling deployment on commodity hardware unavailable to standard LLMs.</p>
+        <div class="paper-meta">
+          <span class="paper-info">24 pages · June 2025</span>
+          <a href="#" class="paper-dl">Download →</a>
+        </div>
+      </div>
+      <div class="paper-card reveal">
+        <span class="paper-tag"><span class="paper-tag-dot"></span>Security · 2025</span>
+        <h3 class="paper-title">Air-Gap AI: Operational Protocols for Fully Isolated LLM Deployments</h3>
+        <p class="paper-abstract">A technical blueprint for deploying inference-capable language model systems in fully air-gapped environments — including update protocols, model signing, weight integrity verification, and incident response procedures for classified settings.</p>
+        <div class="paper-meta">
+          <span class="paper-info">36 pages · April 2025</span>
+          <a href="#" class="paper-dl">Download →</a>
+        </div>
+      </div>
+      <div class="paper-card reveal">
+        <span class="paper-tag"><span class="paper-tag-dot"></span>Healthcare · 2024</span>
+        <h3 class="paper-title">Clinical NLP at the Edge: HIPAA-Compliant SLMs for Hospital Information Systems</h3>
+        <p class="paper-abstract">Evaluation of 1.3B parameter clinical SLMs deployed on hospital on-premise hardware. Covers de-identification pipelines, ICD-10 coding accuracy benchmarks, and consent-aware RAG architectures that never transmit PHI beyond the facility perimeter.</p>
+        <div class="paper-meta">
+          <span class="paper-info">31 pages · Nov 2024</span>
+          <a href="#" class="paper-dl">Download →</a>
+        </div>
+      </div>
+      <div class="paper-card reveal">
+        <span class="paper-tag"><span class="paper-tag-dot"></span>Fintech · 2024</span>
+        <h3 class="paper-title">Model Drift in Financial NLP: Detection, Measurement, and Automated Remediation</h3>
+        <p class="paper-abstract">A longitudinal study tracking accuracy decay in financial language models over 12 months. We introduce the Market-Linguistic Drift Index (MLDI) and present an automated retraining scheduler that reduces drift-induced error by 89% with zero manual intervention.</p>
+        <div class="paper-meta">
+          <span class="paper-info">28 pages · Aug 2024</span>
+          <a href="#" class="paper-dl">Download →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── BENCHMARKS ─── -->
+  <section class="section benchmark-section" id="benchmarks">
+    <p class="section-label reveal">Performance Data</p>
+    <h2 class="section-title reveal">SLM Benchmarks vs.<br/><em>Industry Giants</em></h2>
+    <p class="section-intro reveal">All benchmarks run on client-supplied test sets. We publish methodology alongside results — because transparency is the only benchmark that matters to compliance teams.</p>
+
+    <div class="benchmark-layout">
+      <div>
+        <div class="benchmark-tabs reveal">
+          <button class="bench-tab active" onclick="switchBench(this,'accuracy')">Accuracy</button>
+          <button class="bench-tab" onclick="switchBench(this,'latency')">Latency</button>
+          <button class="bench-tab" onclick="switchBench(this,'cost')">Cost/Query</button>
+        </div>
+
+        <!-- Accuracy Chart -->
+        <div class="bar-chart" id="chart-accuracy">
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">AntimKros SLM (Domain)</span>
+              <span class="bar-val">97.3%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:97.3%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">GPT-4o</span>
+              <span class="bar-val">81.2%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:81.2%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Claude 3.5 Sonnet</span>
+              <span class="bar-val">79.8%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:79.8%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Llama 3 70B (Generic)</span>
+              <span class="bar-val">74.1%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill enemy" style="width:74.1%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Mistral 8×7B (Generic)</span>
+              <span class="bar-val">71.4%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill enemy" style="width:71.4%"></div></div>
+          </div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--bone-dim);letter-spacing:.12em;margin-top:20px;text-transform:uppercase;">Domain: Healthcare NLP · Test Set: 5,000 clinical notes · Aug 2025</p>
+        </div>
+
+        <!-- Latency Chart (hidden) -->
+        <div class="bar-chart" id="chart-latency" style="display:none">
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">AntimKros SLM</span>
+              <span class="bar-val" style="color:var(--green)">68ms p99</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:8%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Llama 3 70B (On-prem)</span>
+              <span class="bar-val">420ms p99</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill enemy" style="width:42%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Mistral 8×7B (On-prem)</span>
+              <span class="bar-val">610ms p99</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill enemy" style="width:61%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Claude 3.5 Sonnet (API)</span>
+              <span class="bar-val">1,100ms p99</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:75%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">GPT-4o (API)</span>
+              <span class="bar-val">1,800ms p99</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:100%"></div></div>
+          </div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--bone-dim);letter-spacing:.12em;margin-top:20px;text-transform:uppercase;">Lower is better · Single A100 GPU · Batch size 1 · 512 token output</p>
+        </div>
+
+        <!-- Cost Chart (hidden) -->
+        <div class="bar-chart" id="chart-cost" style="display:none">
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">AntimKros SLM</span>
+              <span class="bar-val" style="color:var(--green)">$0.00008</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:0.8%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Llama 3 70B (Self-hosted)</span>
+              <span class="bar-val">$0.0009</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill enemy" style="width:9%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Mistral 8×7B (API)</span>
+              <span class="bar-val">$0.0027</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill enemy" style="width:27%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">Claude 3.5 Sonnet</span>
+              <span class="bar-val">$0.018</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:60%"></div></div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span class="bar-name">GPT-4o</span>
+              <span class="bar-val">$0.030</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill dim" style="width:100%"></div></div>
+          </div>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--bone-dim);letter-spacing:.12em;margin-top:20px;text-transform:uppercase;">Lower is better · Per 1K tokens · Includes amortised infra · 2025 pricing</p>
+        </div>
+      </div>
+
+      <div class="benchmark-right">
+        <div class="insight-card reveal">
+          <div class="insight-icon">🎯</div>
+          <h3 class="insight-title">Why Domain Wins Every Time</h3>
+          <p class="insight-body">General models are trained to be average across millions of tasks. A 7B parameter SLM trained exclusively on your domain corpus will consistently outperform a 100B parameter general model on your specific use cases — because specificity beats scale.</p>
+          <span class="insight-highlight">97.3% vs 81.2% on Healthcare NLP →</span>
+        </div>
+        <div class="insight-card reveal">
+          <div class="insight-icon">⚡</div>
+          <h3 class="insight-title">Latency Is a Business Metric</h3>
+          <p class="insight-body">At 68ms p99, our SLMs enable real-time document processing, live conversation, and sub-second decision pipelines. API latency from GPT-4o averages 1.8 seconds — which is 26× slower and disqualifies it from most production workflows entirely.</p>
+          <span class="insight-highlight">26× faster than GPT-4o →</span>
+        </div>
+        <div class="insight-card reveal">
+          <div class="insight-icon">💰</div>
+          <h3 class="insight-title">The Cost Cliff Is Real</h3>
+          <p class="insight-body">At 1M queries/day — a common enterprise volume — GPT-4o costs $30,000/day in API fees. Our SLM at the same volume costs $80. The ROI case is not subtle: it's a 375× cost reduction that funds entire engineering teams.</p>
+          <span class="insight-highlight">375× cost reduction at scale →</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── AI ETHICS ─── -->
+  <section class="section ethics-section" id="ethics">
+    <p class="section-label reveal">Our Stance</p>
+    <h2 class="section-title reveal">AI Ethics &<br/><em>Responsible Deployment</em></h2>
+    <p class="section-intro reveal">We believe that private AI done right is more ethical than public AI done carelessly. Our principles are not a marketing checkbox — they are architectural constraints baked into every system we build.</p>
+
+    <div class="ethics-grid">
+      <div class="ethics-card reveal">
+        <div class="ethics-number">01</div>
+        <span class="ethics-icon">🔒</span>
+        <h3 class="ethics-title">Data Minimalism</h3>
+        <p class="ethics-body">We train models on the minimum viable dataset required for domain performance. No unnecessary data collection, no retention beyond training windows, and full data lineage documentation for every model artifact.</p>
+        <div class="ethics-principle">Principle: Collect less. Know more.</div>
+      </div>
+      <div class="ethics-card reveal">
+        <div class="ethics-number">02</div>
+        <span class="ethics-icon">🔍</span>
+        <h3 class="ethics-title">Explainability First</h3>
+        <p class="ethics-body">Every prediction our models make can be traced. We integrate SHAP, LIME, and attention visualization into production deployments — because regulators and auditors need answers, not black boxes.</p>
+        <div class="ethics-principle">Principle: If it can't explain itself, it doesn't ship.</div>
+      </div>
+      <div class="ethics-card reveal">
+        <div class="ethics-number">03</div>
+        <span class="ethics-icon">⚖️</span>
+        <h3 class="ethics-title">Bias Auditing</h3>
+        <p class="ethics-body">Before any model goes to production, it undergoes demographic parity analysis, counterfactual fairness testing, and adversarial probing across protected attribute categories. Bias reports are delivered to clients, not hidden.</p>
+        <div class="ethics-principle">Principle: Measure bias. Report honestly.</div>
+      </div>
+      <div class="ethics-card reveal">
+        <div class="ethics-number">04</div>
+        <span class="ethics-icon">🛑</span>
+        <h3 class="ethics-title">Human Override Always</h3>
+        <p class="ethics-body">No AntimKros system makes final decisions that affect people without a human review layer. We architect for AI-assist, not AI-replace, in any workflow touching healthcare outcomes, financial access, or legal judgments.</p>
+        <div class="ethics-principle">Principle: AI advises. Humans decide.</div>
+      </div>
+      <div class="ethics-card reveal">
+        <div class="ethics-number">05</div>
+        <span class="ethics-icon">📋</span>
+        <h3 class="ethics-title">Consent Architecture</h3>
+        <p class="ethics-body">Training data provenance is fully documented. We do not use scraped data without verifiable consent, and our client agreements include explicit data usage boundaries, ownership clauses, and the right to model deletion.</p>
+        <div class="ethics-principle">Principle: Consent is not a checkbox.</div>
+      </div>
+      <div class="ethics-card reveal">
+        <div class="ethics-number">06</div>
+        <span class="ethics-icon">🌍</span>
+        <h3 class="ethics-title">Open Research</h3>
+        <p class="ethics-body">Our benchmarking methodology, evaluation harnesses, and ethics frameworks are published openly. We believe the enterprise AI ecosystem improves when best practices are shared — even with competitors.</p>
+        <div class="ethics-principle">Principle: Raise the floor for everyone.</div>
+      </div>
+    </div>
+
+    <!-- Manifesto -->
+    <div class="ethics-manifesto reveal">
+      <div>
+        <p class="manifesto-quote">Private AI is not a workaround. It is the only responsible path for industries where data is life, law, or livelihood.</p>
+      </div>
+      <div>
+        <p class="manifesto-body">We founded AntimKros on the belief that the most powerful AI system is one your team fully controls — not one that controls you through dependency, opacity, and escalating API costs. Every architectural decision we make reflects this conviction. Sovereignty is not a feature. It is the product.</p>
+        <p class="manifesto-sig">— AntimKros Research Division, 2025</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── TEAM / EXPERTISE ─── -->
+  <section class="section team-section" id="team">
+    <p class="section-label reveal">The Architects</p>
+    <h2 class="section-title reveal">Research Team &<br/><em>Domain Expertise</em></h2>
+    <p class="section-intro reveal">Our research team spans NLP, distributed systems, cryptography, and regulated-industry domain knowledge. We don't hire generalists — we hire people who have solved your exact problem before.</p>
+    <div class="team-grid">
+      <div class="team-card reveal">
+        <div class="team-avatar">🔬</div>
+        <h3 class="team-name">Dr. Aisha Mercer</h3>
+        <p class="team-role">Chief Research Officer</p>
+        <p class="team-bio">Former NLP lead at a top-5 global bank. PhD in Computational Linguistics. Specialist in financial document understanding and regulatory NLP.</p>
+        <p class="team-pubs">11 published papers · Ex-JPMorgan AI Lab</p>
+      </div>
+      <div class="team-card reveal">
+        <div class="team-avatar">⚙️</div>
+        <h3 class="team-name">Rafael Vasquez</h3>
+        <p class="team-role">Head of Model Architecture</p>
+        <p class="team-bio">Designed training infrastructure for sub-10B parameter models at two unicorn AI startups. Expert in PEFT, LoRA, and quantization pipelines for edge deployment.</p>
+        <p class="team-pubs">7 published papers · Ex-Mistral AI</p>
+      </div>
+      <div class="team-card reveal">
+        <div class="team-avatar">🛡️</div>
+        <h3 class="team-name">Sola Okafor</h3>
+        <p class="team-role">AI Security Research Lead</p>
+        <p class="team-bio">Former CISO at a regional healthcare network. Pioneered air-gapped ML deployment protocols now adopted by three national health ministries. CISSP certified.</p>
+        <p class="team-pubs">9 papers · Keynote: NeurIPS Security Workshop</p>
+      </div>
+      <div class="team-card reveal">
+        <div class="team-avatar">📊</div>
+        <h3 class="team-name">Tina Lin</h3>
+        <p class="team-role">ML Systems Engineer</p>
+        <p class="team-bio">Built real-time ML inference pipelines processing 800M+ daily predictions at a global logistics firm. Expert in MLOps, drift detection, and zero-downtime model rollouts.</p>
+        <p class="team-pubs">5 papers · Ex-Flexport · Ex-Google Brain</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-strip">
+    <div>
+      <h2 class="cta-strip-title">Read the Research.<br/><em>Then Build With Us.</em></h2>
+      <p class="cta-strip-body">Enterprise buyers who engage with our research first close 3× faster. We publish transparently because we're confident the data speaks for itself. If it convinces you, let's talk.</p>
+    </div>
+    <div class="cta-actions">
+      <a href="contact.html" class="btn-primary">Request a Model Audit</a>
+      <a href="security.html" class="btn-ghost">View Security Architecture</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo"><span></span>AntimKros</a>
+        <p>AI research and infrastructure for regulated industries. Private, low-cost, flexible intelligence systems that grow with your team.</p>
+      </div>
+      <div>
+        <p class="footer-col-title">Solutions</p>
+        <ul class="footer-links">
+          <li><a href="solutions.html#slm">Custom SLMs</a></li>
+          <li><a href="solutions.html#pipeline">ML Pipelines</a></li>
+          <li><a href="solutions.html#evolution">12-Month Plan</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Research</p>
+        <ul class="footer-links">
+          <li><a href="#papers">White Papers</a></li>
+          <li><a href="#benchmarks">Benchmarks</a></li>
+          <li><a href="#ethics">AI Ethics</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Contact</p>
+        <ul class="footer-links">
+          <li><a href="contact.html">Request Audit</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mailto:enabler@antimkros.in">enabler@antimkros.in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 AntimKros Research Lab. All rights reserved.</p>
+      <a href="docs.html" class="footer-docs">Technical Documentation & API →</a>
+    </div>
+  </footer>
+
+  <script>
+    // Cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx=0,my=0,rx=0,ry=0;
+    document.addEventListener('mousemove', e => {
+      mx=e.clientX; my=e.clientY;
+      cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+    });
+    function animRing(){
+      rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+      ring.style.left=rx+'px'; ring.style.top=ry+'px';
+      requestAnimationFrame(animRing);
+    }
+    animRing();
+    document.querySelectorAll('a,button').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{cursor.style.width='16px';cursor.style.height='16px';});
+      el.addEventListener('mouseleave',()=>{cursor.style.width='10px';cursor.style.height='10px';});
+    });
+
+    // Benchmark tab switching
+    function switchBench(btn, key) {
+      document.querySelectorAll('.bench-tab').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      ['accuracy','latency','cost'].forEach(k=>{
+        const el = document.getElementById('chart-'+k);
+        if(el) el.style.display = k===key ? 'flex' : 'none';
+      });
+      // Animate bars in new chart
+      setTimeout(()=>{
+        document.querySelectorAll('#chart-'+key+' .bar-fill').forEach(b=>{
+          b.classList.remove('animated'); void b.offsetWidth;
+          b.classList.add('animated');
+        });
+      },50);
+    }
+
+    // Scroll reveal + bar animation trigger
+    const reveals = document.querySelectorAll('.reveal');
+    const obs = new IntersectionObserver((entries)=>{
+      entries.forEach((e,i)=>{
+        if(e.isIntersecting){
+          setTimeout(()=>{
+            e.target.classList.add('visible');
+            // Animate bars if inside
+            e.target.querySelectorAll('.bar-fill').forEach(b=>{
+              b.classList.add('animated');
+            });
+          }, i*80);
+          obs.unobserve(e.target);
+        }
+      });
+    },{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+    reveals.forEach(el=>obs.observe(el));
+
+    // Animate default chart bars on load
+    setTimeout(()=>{
+      document.querySelectorAll('#chart-accuracy .bar-fill').forEach(b=>b.classList.add('animated'));
+    },600);
+  </script>
+</body>
+</html>
