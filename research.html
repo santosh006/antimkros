@@ -450,6 +450,52 @@
     /* Reveal */
     .reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s ease, transform .7s ease; }
     .reveal.visible { opacity: 1; transform: translateY(0); }
+  
+  /* ── NAV RESPONSIVE ── */
+  @media (max-width: 1024px) { nav { padding: 18px 28px; } .nav-links { gap: 20px; } }
+  @media (max-width: 768px) { nav { padding: 16px 20px; } .nav-links { display: none; } .nav-cta { display: none; } .nav-hamburger { display: flex !important; } }
+  .nav-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; padding: 4px; cursor: none; }
+  .nav-hamburger span { display: block; width: 22px; height: 1px; background: var(--bone); transition: all .3s; }
+  .nav-hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(4px,4px); }
+  .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+  .nav-hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4px,-4px); }
+  .mobile-menu { display: none; position: fixed; top: 57px; left: 0; right: 0; bottom: 0; background: rgba(8,8,8,.97); z-index: 850; flex-direction: column; align-items: center; justify-content: center; gap: 32px; backdrop-filter: blur(12px); }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 300; color: var(--bone); text-decoration: none; transition: color .3s; letter-spacing:.02em; }
+  .mobile-menu a:hover { color: var(--gold); }
+  .mobile-menu .m-cta { font-family: 'JetBrains Mono', monospace !important; font-size: 11px !important; letter-spacing: .15em !important; text-transform: uppercase; padding: 14px 32px; border: 1px solid var(--gold); color: var(--gold) !important; margin-top: 8px; }
+
+  @media (max-width: 1024px) {
+    .page-hero { padding: 140px 40px 80px; grid-template-columns: 1fr; gap: 48px; }
+    .hero-stats-col { flex-direction: row; flex-wrap: wrap; }
+    .hero-stat-row { flex: 1; min-width: 200px; }
+    .section { padding: 80px 40px; }
+    .papers-grid { grid-template-columns: 1fr; }
+    .featured-paper { grid-template-columns: 1fr; gap: 32px; }
+    .benchmark-layout { grid-template-columns: 1fr; gap: 48px; }
+    .ethics-grid { grid-template-columns: 1fr 1fr; }
+    .ethics-manifesto { grid-template-columns: 1fr; gap: 32px; }
+    .team-grid { grid-template-columns: 1fr 1fr; }
+    .cta-strip { padding: 80px 40px; grid-template-columns: 1fr; gap: 32px; }
+    .cta-actions { align-items: flex-start; }
+    footer { padding: 48px 40px 32px; }
+    .footer-top { grid-template-columns: 1fr 1fr; gap: 40px; }
+  }
+  @media (max-width: 768px) {
+    .page-hero { padding: 120px 24px 60px; }
+    .hero-stats-col { flex-direction: column; }
+    .section { padding: 60px 24px; }
+    .section-intro { margin-bottom: 40px; }
+    .featured-paper { padding: 32px 24px; }
+    .featured-metrics { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .metric-box { flex: 1; min-width: 80px; }
+    .ethics-grid { grid-template-columns: 1fr; }
+    .team-grid { grid-template-columns: 1fr; }
+    .cta-strip { padding: 60px 24px; }
+    footer { padding: 40px 24px 28px; }
+    .footer-top { grid-template-columns: 1fr; gap: 32px; }
+    .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+  }
   </style>
 </head>
 <body>
@@ -467,7 +513,15 @@
       <li><a href="case-studies.html">Case Studies</a></li>
     </ul>
     <a href="contact.html" class="nav-cta">Request Audit</a>
+    <button class="nav-hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
   </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="solutions.html">Solutions</a>
+    <a href="research.html">Research Lab</a>
+    <a href="security.html">Security</a>
+    <a href="case-studies.html">Case Studies</a>
+    <a href="contact.html" class="m-cta">Request Audit</a>
+  </div>
 
   <!-- PAGE HERO -->
   <section class="page-hero">
@@ -889,7 +943,12 @@
     </div>
   </footer>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
+    // Hamburger
+    const hbg = document.getElementById('hamburger');
+    const mmenu = document.getElementById('mobileMenu');
+    if(hbg){ hbg.addEventListener('click',()=>{ hbg.classList.toggle('open'); mmenu.classList.toggle('open'); document.body.style.overflow=mmenu.classList.contains('open')?'hidden':''; }); mmenu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{ hbg.classList.remove('open'); mmenu.classList.remove('open'); document.body.style.overflow=''; })); }
+  </script><script>
     // Cursor
     const cursor = document.getElementById('cursor');
     const ring = document.getElementById('cursorRing');
