@@ -869,6 +869,22 @@
   </style>
 </head>
 <body>
+  <script>
+    // Maintenance guard — remove or set MAINTENANCE=false to disable
+    (function(){
+      var MAINTENANCE = true;
+      var SECRET_KEY = 'antimkros2025';
+      var SESSION_FLAG = 'ak_preview_access';
+      if (!MAINTENANCE) return;
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('preview') === SECRET_KEY) {
+        sessionStorage.setItem(SESSION_FLAG, 'granted');
+      }
+      if (sessionStorage.getItem(SESSION_FLAG) !== 'granted') {
+        window.location.replace('maintenance.html');
+      }
+    })();
+  </script>
 
   <!-- Custom Cursor -->
   <div class="cursor" id="cursor"></div>
